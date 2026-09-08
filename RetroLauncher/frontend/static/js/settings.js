@@ -1,0 +1,221 @@
+(function () {
+  const el = (id) => document.getElementById(id);
+  let platforms = [];
+
+  function toast(message) {
+    const t = el("toast");
+    t.textContent = message;
+    t.hidden = false;
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => (t.hidden = true), 3000);
+  }
+
+  async function api(path, options) {
+    const resp = await fetch(path, {
+      headers: { "Content-Type": "application/json" },
+      ...options,
+    });
+    if (!resp.ok) {
+      let detail = resp.statusText;
+      try {
+        const body = await resp.json();
+        detail = body.detail || detail;
+      } catch (_) {
+        /* ignore */
+      }
+      throw new Error(detail);
+    }
+    if (resp.status === 204) return null;
+    return resp.json();
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement("div");
+    d.textContent = str == null ? "" : String(str);
+    return d.innerHTML;
+  }
+
+  // ---------------- Platforms ----------------
+
+  async function loadPlatforms() {
+    platforms = await api("/api/platforms");
+    renderPlatforms();
+    renderPlatformSelect();
+    await loadEmulators();
+  }
+
+  function renderPlatforms() {
+    const container = el("platform-rows");
+    container.innerHTML = "";
+    if (platforms.length === 0) {
+      container.innerHTML = '<p class="meta">No platforms yet.</p>';
+      return;
+    }
+    for (const p of platforms) {
+      const row = document.createElement("div");
+      row.className = "list-row";
+      row.innerHTML = `
+        <div class="info">
+          <div>${escapeHtml(p.name)} <span class="sub">(${p.game_count} games)</span></div>
+          <div class="sub">${escapeHtml(p.folder_path)} · ${escapeHtml(p.extensions)}</div>
+        </div>
+        <div>
+          <button class="btn" data-nav data-action="scan">Scan</button>
+          <button class="btn danger" data-nav data-action="delete">Delete</button>
+        </div>
+      `;
+      row.querySelector('[data-action="scan"]').addEventListener("click", () => scanPlatform(p.id));
+      row.querySelector('[data-action="delete"]').addEventListener("click", () => deletePlatform(p.id));
+      container.appendChild(row);
+    }
+  }
+
+  function renderPlatformSelect() {
+    const select = el("e-platform");
+    const previous = select.value;
+    select.innerHTML = platforms
+      .map((p) => `<option value="${p.id}">${escapeHtml(p.name)}</option>`)
+      .join("");
+    if (previous && platforms.some((p) => String(p.id) === previous)) {
+      select.value = previous;
+    }
+  }
+
+  async function scanPlatform(id) {
+    try {
+      const result = await api(`/api/platforms/${id}/scan`, { method: "POST" });
+      toast(`Scan complete: ${result.added} new game(s) added (${result.total_roms_found} ROM files found).`);
+      await loadPlatforms();
+    } catch (e) {
+      toast(`Scan failed: ${e.message}`);
+    }
+  }
+
+  async function deletePlatform(id) {
+    if (!confirm("Delete this platform and all its games? This does not delete ROM files.")) return;
+    await api(`/api/platforms/${id}`, { method: "DELETE" });
+    await loadPlatforms();
+  }
+
+  el("platform-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      await api("/api/platforms", {
+        method: "POST",
+        body: JSON.stringify({
+          name: el("p-name").value.trim(),
+          folder_path: el("p-folder").value.trim(),
+          extensions: el("p-ext").value.trim(),
+        }),
+      });
+      el("platform-form").reset();
+      toast("Platform added");
+      await loadPlatforms();
+    } catch (err) {
+      toast(`Failed to add platform: ${err.message}`);
+    }
+  });
+
+  // ---------------- Emulators ----------------
+
+  async function loadEmulators() {
+    const platformId = el("e-platform").value;
+    const container = el("emulator-rows");
+    if (!platformId) {
+      container.innerHTML = '<p class="meta">Add a platform first.</p>';
+      return;
+    }
+    const emulators = await api(`/api/emulators?platform_id=${platformId}`);
+    container.innerHTML = "";
+    if (emulators.length === 0) {
+      container.innerHTML = '<p class="meta">No emulators configured for this platform yet.</p>';
+      return;
+    }
+    for (const em of emulators) {
+      const row = document.createElement("div");
+      row.className = "list-row";
+      row.innerHTML = `
+        <div class="info">
+          <div>${escapeHtml(em.name)} ${em.is_default ? "<span class=\"sub\">(default)</span>" : ""}</div>
+          <div class="sub">${escapeHtml(em.executable_path)} ${escapeHtml(em.args_template)}</div>
+        </div>
+        <div>
+          <button class="btn danger" data-nav data-action="delete">Delete</button>
+        </div>
+      `;
+      row.querySelector('[data-action="delete"]').addEventListener("click", () => deleteEmulator(em.id));
+      container.appendChild(row);
+    }
+  }
+
+  async function deleteEmulator(id) {
+    await api(`/api/emulators/${id}`, { method: "DELETE" });
+    await loadEmulators();
+  }
+
+  el("e-platform").addEventListener("change", loadEmulators);
+
+  el("emulator-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const platformId = el("e-platform").value;
+    if (!platformId) {
+      toast("Add a platform first");
+      return;
+    }
+    try {
+      await api("/api/emulators", {
+        method: "POST",
+        body: JSON.stringify({
+          platform_id: Number(platformId),
+          name: el("e-name").value.trim(),
+          executable_path: el("e-exec").value.trim(),
+          args_template: el("e-args").value.trim() || "{rom}",
+          is_default: true,
+        }),
+      });
+      el("emulator-form").reset();
+      el("e-args").value = "{rom}";
+      toast("Emulator added");
+      await loadEmulators();
+    } catch (err) {
+      toast(`Failed to add emulator: ${err.message}`);
+    }
+  });
+
+  // ---------------- Metadata settings ----------------
+
+  async function loadSettings() {
+    const settings = await api("/api/settings");
+    const byKey = Object.fromEntries(settings.map((s) => [s.key, s.value]));
+    if (byKey.igdb_client_id) el("s-client-id").value = byKey.igdb_client_id;
+    // igdb_client_secret is masked by the API; leave the field blank so the
+    // user isn't shown a fake value, but note that a saved secret exists.
+    if (byKey.igdb_client_secret) el("s-client-secret").placeholder = "•••••••• (saved)";
+  }
+
+  el("save-settings").addEventListener("click", async () => {
+    try {
+      await api("/api/settings", {
+        method: "PUT",
+        body: JSON.stringify({ key: "igdb_client_id", value: el("s-client-id").value.trim() }),
+      });
+      if (el("s-client-secret").value.trim()) {
+        await api("/api/settings", {
+          method: "PUT",
+          body: JSON.stringify({ key: "igdb_client_secret", value: el("s-client-secret").value.trim() }),
+        });
+      }
+      toast("Settings saved");
+    } catch (err) {
+      toast(`Failed to save settings: ${err.message}`);
+    }
+  });
+
+  function init() {
+    window.RetroNav.onBack = () => (window.location.href = "/");
+    loadPlatforms();
+    loadSettings();
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();
