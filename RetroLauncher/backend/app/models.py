@@ -23,6 +23,7 @@ class Platform(Base):
     name = Column(String, unique=True, nullable=False)
     folder_path = Column(String, nullable=False)
     extensions = Column(String, nullable=False, default="")  # comma-separated, e.g. ".nes,.zip"
+    icon_path = Column(String)  # filename under data/platform_icons, served at /media/platform_icons/...
 
     emulators = relationship(
         "Emulator", back_populates="platform", cascade="all, delete-orphan"

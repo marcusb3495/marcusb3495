@@ -54,19 +54,53 @@
     for (const p of platforms) {
       const row = document.createElement("div");
       row.className = "list-row";
+      const iconSrc = p.icon_path ? `/media/platform_icons/${p.icon_path}` : "";
       row.innerHTML = `
-        <div class="info">
-          <div>${escapeHtml(p.name)} <span class="sub">(${p.game_count} games)</span></div>
-          <div class="sub">${escapeHtml(p.folder_path)} · ${escapeHtml(p.extensions)}</div>
+        <div class="platform-icon-row">
+          ${
+            iconSrc
+              ? `<img class="platform-icon-preview" src="${iconSrc}" alt="" />`
+              : '<div class="platform-icon-preview"></div>'
+          }
+          <div class="info">
+            <div>${escapeHtml(p.name)} <span class="sub">(${p.game_count} games)</span></div>
+            <div class="sub">${escapeHtml(p.folder_path)} · ${escapeHtml(p.extensions)}</div>
+          </div>
         </div>
         <div>
+          <button class="btn" data-nav data-action="icon">Set Icon</button>
           <button class="btn" data-nav data-action="scan">Scan</button>
           <button class="btn danger" data-nav data-action="delete">Delete</button>
+          <input type="file" accept="image/*,.svg" data-role="icon-input" hidden />
         </div>
       `;
+      const iconInput = row.querySelector('[data-role="icon-input"]');
+      row.querySelector('[data-action="icon"]').addEventListener("click", () => iconInput.click());
+      iconInput.addEventListener("change", () => {
+        if (iconInput.files[0]) uploadPlatformIcon(p.id, iconInput.files[0]);
+      });
       row.querySelector('[data-action="scan"]').addEventListener("click", () => scanPlatform(p.id));
       row.querySelector('[data-action="delete"]').addEventListener("click", () => deletePlatform(p.id));
       container.appendChild(row);
+    }
+  }
+
+  async function uploadPlatformIcon(platformId, file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const resp = await fetch(`/api/platforms/${platformId}/icon`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!resp.ok) {
+        const body = await resp.json().catch(() => ({}));
+        throw new Error(body.detail || resp.statusText);
+      }
+      toast("Icon updated");
+      await loadPlatforms();
+    } catch (err) {
+      toast(`Failed to upload icon: ${err.message}`);
     }
   }
 

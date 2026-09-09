@@ -6,6 +6,8 @@ DATA_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", 
 os.makedirs(DATA_DIR, exist_ok=True)
 COVERS_DIR = os.path.join(DATA_DIR, "covers")
 os.makedirs(COVERS_DIR, exist_ok=True)
+PLATFORM_ICONS_DIR = os.path.join(DATA_DIR, "platform_icons")
+os.makedirs(PLATFORM_ICONS_DIR, exist_ok=True)
 
 DATABASE_URL = f"sqlite:///{os.path.join(DATA_DIR, 'library.db')}"
 

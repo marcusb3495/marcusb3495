@@ -24,6 +24,7 @@ class PlatformOut(PlatformBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     game_count: int = 0
+    icon_path: Optional[str] = None
 
 
 class EmulatorBase(BaseModel):

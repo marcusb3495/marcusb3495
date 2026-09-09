@@ -39,6 +39,21 @@
 
   // ---------------- Sidebar ----------------
 
+  // Generic fallback glyph shown for platforms without a custom uploaded icon.
+  const DEFAULT_PLATFORM_ICON = `<svg class="nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M7 7h10a4 4 0 0 1 4 4v3a3 3 0 0 1-5.2 2.05L14 14.5h-4l-1.8 1.55A3 3 0 0 1 3 14v-3a4 4 0 0 1 4-4Z" stroke="currentColor" stroke-width="1.6"/>
+    <path d="M8 10v3M6.5 11.5h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="16.5" cy="10.5" r="0.9" fill="currentColor"/>
+    <circle cx="18.5" cy="12.5" r="0.9" fill="currentColor"/>
+  </svg>`;
+
+  function platformIconHtml(p) {
+    if (p.icon_path) {
+      return `<img class="nav-icon" src="/media/platform_icons/${p.icon_path}" alt="" />`;
+    }
+    return DEFAULT_PLATFORM_ICON;
+  }
+
   async function loadPlatforms() {
     state.platforms = await api("/api/platforms");
     const list = el("platform-list");
@@ -48,7 +63,7 @@
       btn.className = "nav-item";
       btn.dataset.nav = "";
       btn.dataset.platformId = p.id;
-      btn.innerHTML = `<span>${escapeHtml(p.name)}</span><span class="count">${p.game_count}</span>`;
+      btn.innerHTML = `<span class="nav-label">${platformIconHtml(p)}${escapeHtml(p.name)}</span><span class="count">${p.game_count}</span>`;
       btn.addEventListener("click", () => selectPlatform(p.id, p.name));
       list.appendChild(btn);
     }
