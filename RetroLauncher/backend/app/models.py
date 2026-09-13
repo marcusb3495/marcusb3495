@@ -24,6 +24,7 @@ class Platform(Base):
     folder_path = Column(String, nullable=False)
     extensions = Column(String, nullable=False, default="")  # comma-separated, e.g. ".nes,.zip"
     icon_path = Column(String)  # filename under data/platform_icons, served at /media/platform_icons/...
+    browser_core = Column(String)  # EmulatorJS core id (e.g. "nes", "snes", "gba") for in-browser play
 
     emulators = relationship(
         "Emulator", back_populates="platform", cascade="all, delete-orphan"

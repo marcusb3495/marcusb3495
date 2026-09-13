@@ -1,4 +1,7 @@
+import os
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
@@ -51,3 +54,13 @@ def delete_game(game_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Game not found")
     db.delete(game)
     db.commit()
+
+
+@router.get("/{game_id}/rom")
+def get_game_rom(game_id: int, db: Session = Depends(get_db)):
+    game = db.get(models.Game, game_id)
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    if not os.path.isfile(game.rom_path):
+        raise HTTPException(status_code=404, detail="ROM file not found on disk")
+    return FileResponse(game.rom_path, filename=os.path.basename(game.rom_path))

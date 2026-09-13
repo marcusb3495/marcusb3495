@@ -36,8 +36,20 @@
               <label for="p-ext">Extensions (comma separated)</label>
               <input id="p-ext" required placeholder=".nes,.zip" />
             </div>
+            <div class="form-row">
+              <label for="p-core">Browser Core (for Play in Browser, optional)</label>
+              <input id="p-core" placeholder="e.g. nes, snes, gba, genesis, psx, n64" />
+            </div>
             <button class="btn primary" type="submit" data-nav>+ Add Platform</button>
           </form>
+          <p class="meta" style="margin-top: 10px">
+            "Browser Core" is the <a href="https://emulatorjs.org/docs/system" target="_blank" rel="noopener">EmulatorJS</a>
+            core id used for the in-browser "Play in Browser" button. Common values: <code>nes</code>, <code>snes</code>,
+            <code>gb</code>, <code>gbc</code>, <code>gba</code>, <code>n64</code>, <code>nds</code>, <code>genesis</code>,
+            <code>segaCD</code>, <code>sega32x</code>, <code>segaGG</code>, <code>segaMS</code>, <code>psx</code>,
+            <code>atari2600</code>, <code>atari7800</code>, <code>lynx</code>, <code>pce</code>, <code>arcade</code>.
+            Leave blank to only allow launching via a native emulator on the server.
+          </p>
         </div>
 
         <div class="panel">

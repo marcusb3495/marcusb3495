@@ -15,10 +15,14 @@ models.Base.metadata.create_all(bind=engine)
 # create_all() only creates missing tables, not columns added to a model
 # after a database already exists - patch those in for existing installs.
 with engine.begin() as conn:
-    try:
-        conn.execute(text("ALTER TABLE platforms ADD COLUMN icon_path VARCHAR"))
-    except OperationalError:
-        pass  # column already exists
+    for ddl in (
+        "ALTER TABLE platforms ADD COLUMN icon_path VARCHAR",
+        "ALTER TABLE platforms ADD COLUMN browser_core VARCHAR",
+    ):
+        try:
+            conn.execute(text(ddl))
+        except OperationalError:
+            pass  # column already exists
 
 app = FastAPI(title="RetroLauncher")
 
@@ -47,6 +51,11 @@ def index():
 @app.get("/settings.html")
 def settings_page():
     return FileResponse(os.path.join(_FRONTEND_DIR, "settings.html"))
+
+
+@app.get("/play.html")
+def play_page():
+    return FileResponse(os.path.join(_FRONTEND_DIR, "play.html"))
 
 
 @app.get("/api/health")

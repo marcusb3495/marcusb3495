@@ -167,7 +167,7 @@
     el("modal-favorite").textContent = game.favorite ? "★ Favorited" : "☆ Favorite";
     el("scrape-results").innerHTML = "";
     el("modal-backdrop").hidden = false;
-    setTimeout(() => window.RetroNav.setFocus(el("modal-launch")), 0);
+    setTimeout(() => window.RetroNav.setFocus(el("modal-play-browser")), 0);
   }
 
   function closeModal() {
@@ -181,11 +181,16 @@
     return p ? p.name : null;
   }
 
+  function playInBrowser() {
+    if (!state.activeGame) return;
+    window.location.href = `/play.html?game=${state.activeGame.id}`;
+  }
+
   async function launchActiveGame() {
     if (!state.activeGame) return;
     try {
       await api(`/api/games/${state.activeGame.id}/launch`, { method: "POST", body: "{}" });
-      toast(`Launching ${state.activeGame.title}...`);
+      toast(`Launching ${state.activeGame.title} on the server's native emulator...`);
     } catch (e) {
       toast(`Launch failed: ${e.message}`);
     }
@@ -260,6 +265,7 @@
     el("modal-backdrop").addEventListener("click", (e) => {
       if (e.target === el("modal-backdrop")) closeModal();
     });
+    el("modal-play-browser").addEventListener("click", playInBrowser);
     el("modal-launch").addEventListener("click", launchActiveGame);
     el("modal-favorite").addEventListener("click", toggleFavorite);
     el("modal-scrape").addEventListener("click", scrapeActiveGame);

@@ -67,6 +67,11 @@
             <div class="sub">${escapeHtml(p.folder_path)} · ${escapeHtml(p.extensions)}</div>
           </div>
         </div>
+        <div class="platform-icon-row">
+          <input class="search-box" data-role="core-input" value="${escapeHtml(p.browser_core || "")}"
+                 placeholder="Browser core (e.g. nes)" style="max-width: 180px; padding: 6px 10px" />
+          <button class="btn" data-nav data-action="save-core">Save</button>
+        </div>
         <div>
           <button class="btn" data-nav data-action="icon">Set Icon</button>
           <button class="btn" data-nav data-action="scan">Scan</button>
@@ -81,7 +86,24 @@
       });
       row.querySelector('[data-action="scan"]').addEventListener("click", () => scanPlatform(p.id));
       row.querySelector('[data-action="delete"]').addEventListener("click", () => deletePlatform(p.id));
+      const coreInput = row.querySelector('[data-role="core-input"]');
+      row.querySelector('[data-action="save-core"]').addEventListener("click", () =>
+        savePlatformCore(p.id, coreInput.value.trim())
+      );
       container.appendChild(row);
+    }
+  }
+
+  async function savePlatformCore(platformId, browserCore) {
+    try {
+      await api(`/api/platforms/${platformId}`, {
+        method: "PUT",
+        body: JSON.stringify({ browser_core: browserCore || null }),
+      });
+      toast("Browser core saved");
+      await loadPlatforms();
+    } catch (err) {
+      toast(`Failed to save browser core: ${err.message}`);
     }
   }
 
@@ -140,6 +162,7 @@
           name: el("p-name").value.trim(),
           folder_path: el("p-folder").value.trim(),
           extensions: el("p-ext").value.trim(),
+          browser_core: el("p-core").value.trim() || null,
         }),
       });
       el("platform-form").reset();
