@@ -140,18 +140,53 @@ class ScreenScraperProvider(MetadataProvider):
         if system_id:
             params["systemeid"] = system_id
 
-        resp = requests.get(_SEARCH_URL, params=params, timeout=20)
-        resp.raise_for_status()
-        data = resp.json()
-        jeux = ((data.get("response") or {}).get("jeux")) or []
+        response_block = self._get_response_block(_SEARCH_URL, params)
+        jeux = response_block.get("jeux") or []
+        if isinstance(jeux, dict):
+            # ScreenScraper collapses a single match to an object instead of
+            # a one-item array - normalize it back to a list.
+            jeux = [jeux]
         return [self._row_to_candidate(row) for row in jeux]
 
     def get_details(self, provider_id: str) -> ScrapeCandidate:
         params = {**self._auth_params(), "gameid": provider_id}
-        resp = requests.get(_INFO_URL, params=params, timeout=20)
-        resp.raise_for_status()
-        data = resp.json()
-        jeu = (data.get("response") or {}).get("jeu")
+        response_block = self._get_response_block(_INFO_URL, params)
+        jeu = response_block.get("jeu")
         if not jeu:
             raise ValueError(f"No ScreenScraper game found for id {provider_id}")
         return self._row_to_candidate(jeu)
+
+    def _get_response_block(self, url: str, params: dict) -> dict:
+        """GET `url`, raise a clear error if ScreenScraper reports a problem.
+
+        ScreenScraper almost always answers with HTTP 200 even when something
+        is wrong (bad devid/devpassword, an unapproved dev account, quota
+        exceeded, etc.) - the failure shows up only in the response body, not
+        the HTTP status. Without this check, those failures look exactly like
+        "zero search results" to the caller.
+        """
+        resp = requests.get(url, params=params, timeout=20)
+        resp.raise_for_status()
+
+        try:
+            data = resp.json()
+        except ValueError as exc:
+            snippet = resp.text[:300].strip()
+            raise ValueError(
+                f"ScreenScraper returned a non-JSON response (likely a login/quota "
+                f"error, or your dev account isn't approved yet): {snippet}"
+            ) from exc
+
+        if not isinstance(data, dict) or "response" not in data:
+            header = data.get("header") if isinstance(data, dict) else None
+            message = None
+            if isinstance(header, dict):
+                message = header.get("erreur") or header.get("error") or header.get("message")
+            raise ValueError(
+                "ScreenScraper API error"
+                + (f": {message}" if message else "")
+                + " - double-check your devid/devpassword in Settings, and that "
+                "your developer account has been approved by the ScreenScraper team."
+            )
+
+        return data["response"] or {}
