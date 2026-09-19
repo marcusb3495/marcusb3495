@@ -92,6 +92,18 @@ class ScanResult(BaseModel):
     total_roms_found: int
 
 
+class GamelistImportRequest(BaseModel):
+    gamelist_path: str
+
+
+class GamelistImportResult(BaseModel):
+    platform_id: int
+    total_entries: int
+    matched: int
+    covers_imported: int
+    not_found: int
+
+
 class ScrapeCandidate(BaseModel):
     provider_id: str
     title: str

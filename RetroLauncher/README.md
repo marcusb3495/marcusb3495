@@ -41,6 +41,7 @@ RetroLauncher/
       schemas.py          Pydantic request/response schemas
       scanner.py           ROM folder scanning + filename cleanup
       launcher.py           Emulator process launching
+      gamelist_import.py     RetroBat/Batocera gamelist.xml import (metadata + box art)
       scraper/               Pluggable metadata/box-art providers (ScreenScraper, IGDB)
       routers/                 REST API endpoints
     requirements.txt
@@ -100,6 +101,16 @@ Then open **http://localhost:8080** in a browser on the same machine.
    The "Active provider" dropdown picks which one is tried first; if it isn't
    configured, RetroLauncher automatically falls back to whichever provider
    *is* set up.
+
+   Already have metadata + box art from **RetroBat** or **Batocera**? Both
+   generate a standard EmulationStation-style `gamelist.xml` (usually right
+   in the ROM folder) plus a folder of box art it references. On the
+   platform's row in Settings, point **"Import Gamelist"** at that
+   `gamelist.xml` path and click it — this reads the file directly and
+   copies over descriptions, genre, developer/publisher, release date,
+   rating, and box art for every ROM it can match, with no API calls, rate
+   limits, or account needed. Run **Scan** first so there's something to
+   match against.
 6. Back in the library, use a gamepad's D-pad + A/B, or your keyboard's arrow
    keys + Enter/Escape, to browse and launch games.
 

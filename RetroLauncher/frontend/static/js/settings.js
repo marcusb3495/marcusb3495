@@ -74,6 +74,12 @@
                  placeholder="ScreenScraper system ID" style="max-width: 160px; padding: 6px 10px" />
           <button class="btn" data-nav data-action="save-core">Save</button>
         </div>
+        <div class="platform-icon-row">
+          <input class="search-box" data-role="gamelist-input"
+                 value="${escapeHtml(p.folder_path)}/gamelist.xml"
+                 placeholder="Path to gamelist.xml" style="max-width: 320px; padding: 6px 10px" />
+          <button class="btn" data-nav data-action="import-gamelist">Import Gamelist (RetroBat/Batocera)</button>
+        </div>
         <div>
           <button class="btn" data-nav data-action="icon">Set Icon</button>
           <button class="btn" data-nav data-action="scan">Scan</button>
@@ -93,7 +99,31 @@
       row.querySelector('[data-action="save-core"]').addEventListener("click", () =>
         savePlatformScrapeFields(p.id, coreInput.value.trim(), ssSystemInput.value.trim())
       );
+      const gamelistInput = row.querySelector('[data-role="gamelist-input"]');
+      row.querySelector('[data-action="import-gamelist"]').addEventListener("click", () =>
+        importGamelist(p.id, gamelistInput.value.trim())
+      );
       container.appendChild(row);
+    }
+  }
+
+  async function importGamelist(platformId, gamelistPath) {
+    if (!gamelistPath) {
+      toast("Enter a gamelist.xml path first");
+      return;
+    }
+    try {
+      const result = await api(`/api/platforms/${platformId}/import-gamelist`, {
+        method: "POST",
+        body: JSON.stringify({ gamelist_path: gamelistPath }),
+      });
+      toast(
+        `Imported ${result.matched}/${result.total_entries} entries ` +
+          `(${result.covers_imported} cover art) - ${result.not_found} not matched to a scanned game`
+      );
+      await loadPlatforms();
+    } catch (err) {
+      toast(`Gamelist import failed: ${err.message}`);
     }
   }
 

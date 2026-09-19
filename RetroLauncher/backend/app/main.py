@@ -8,7 +8,7 @@ from sqlalchemy.exc import OperationalError
 
 from . import models
 from .database import COVERS_DIR, PLATFORM_ICONS_DIR, engine
-from .routers import emulators, games, launch, platforms, scan, scrape, settings
+from .routers import emulators, games, gamelist_import, launch, platforms, scan, scrape, settings
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -31,6 +31,7 @@ app.include_router(platforms.router)
 app.include_router(emulators.router)
 app.include_router(games.router)
 app.include_router(scan.router)
+app.include_router(gamelist_import.router)
 app.include_router(launch.router)
 app.include_router(scrape.router)
 app.include_router(settings.router)
