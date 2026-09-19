@@ -19,13 +19,15 @@ def scrape_search(game_id: int, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=400,
             detail=(
-                "No metadata provider configured. Add igdb_client_id and "
-                "igdb_client_secret in Settings (see README for how to get them)."
+                "No metadata provider configured. Add ScreenScraper or IGDB "
+                "credentials in Settings (see README for how to get them)."
             ),
         )
 
     try:
-        candidates = provider.search(game.title, game.platform.name)
+        candidates = provider.search(
+            game.title, game.platform.name, game.platform.screenscraper_system_id
+        )
     except Exception as exc:  # noqa: BLE001 - surface provider errors to the UI
         raise HTTPException(status_code=502, detail=f"Scrape search failed: {exc}")
 
@@ -40,7 +42,10 @@ def scrape_apply(game_id: int, payload: schemas.ScrapeApply, db: Session = Depen
 
     provider = get_provider(db)
     if not provider.is_configured():
-        raise HTTPException(status_code=400, detail="No metadata provider configured")
+        raise HTTPException(
+            status_code=400,
+            detail="No metadata provider configured. Add ScreenScraper or IGDB credentials in Settings.",
+        )
 
     try:
         details = provider.get_details(payload.provider_id)

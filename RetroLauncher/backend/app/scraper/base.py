@@ -30,8 +30,18 @@ class MetadataProvider(ABC):
         """Whether the required credentials are present."""
 
     @abstractmethod
-    def search(self, title: str, platform_name: Optional[str] = None) -> list[ScrapeCandidate]:
-        """Return candidate matches for a game title, best match first."""
+    def search(
+        self,
+        title: str,
+        platform_name: Optional[str] = None,
+        system_id: Optional[str] = None,
+    ) -> list[ScrapeCandidate]:
+        """Return candidate matches for a game title, best match first.
+
+        `system_id` is a provider-specific platform identifier (e.g. a
+        ScreenScraper "systemeid") used to narrow results when the caller has
+        one on hand; providers that don't use one should just ignore it.
+        """
 
     @abstractmethod
     def get_details(self, provider_id: str) -> ScrapeCandidate:

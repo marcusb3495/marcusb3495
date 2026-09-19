@@ -22,8 +22,10 @@ Features:
   screen (useful when you're physically at that machine, or want a more
   accurate/full-featured emulator than a browser core provides).
 - **Metadata & box art scraping** — pluggable metadata provider interface
-  (`backend/app/scraper/`), with an IGDB implementation included. Add your own
-  provider (ScreenScraper, TheGamesDB, ...) by implementing `MetadataProvider`.
+  (`backend/app/scraper/`), with **ScreenScraper** and **IGDB** implementations
+  included (pick the active one in Settings; RetroLauncher falls back to
+  whichever is actually configured). Add another provider (TheGamesDB, ...) by
+  implementing `MetadataProvider`.
 - **Gamepad navigation** — a 10-foot UI navigable entirely with a connected
   gamepad (via the browser Gamepad API) or keyboard arrow keys, with visible
   focus highlighting and A/B (confirm/back) mapped to launch and close.
@@ -39,7 +41,7 @@ RetroLauncher/
       schemas.py          Pydantic request/response schemas
       scanner.py           ROM folder scanning + filename cleanup
       launcher.py           Emulator process launching
-      scraper/               Pluggable metadata/box-art providers (IGDB included)
+      scraper/               Pluggable metadata/box-art providers (ScreenScraper, IGDB)
       routers/                 REST API endpoints
     requirements.txt
     run.py                Entrypoint: `python run.py`
@@ -80,11 +82,24 @@ Then open **http://localhost:8080** in a browser on the same machine.
    opens on whichever machine is running the RetroLauncher server, not on
    whatever device you're browsing from — see the note below.
 4. Click **Scan** on the platform to build its game list from the ROM folder.
-5. (Optional) To pull box art and descriptions automatically, create a free
-   Twitch developer application at
-   [dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps) to get an
-   IGDB Client ID + Secret, and paste them into the Metadata & Box Art panel
-   in Settings. Then use **Fetch Metadata** on any game's detail view.
+5. (Optional) To pull box art and descriptions automatically, set up a
+   metadata provider in the Metadata & Box Art panel in Settings, then use
+   **Fetch Metadata** on any game's detail view:
+   - **ScreenScraper** (recommended — much stronger retro/arcade coverage):
+     request a free developer account via their
+     [developer forum](https://www.screenscraper.fr/forumdevs.php) (not an
+     instant signup), then enter the Dev ID/Password. A personal ScreenScraper
+     account is optional but strongly recommended to avoid aggressive rate
+     limiting. You can also set a per-platform **ScreenScraper System ID**
+     (found at [screenscraper.fr/systemesliste.php](https://www.screenscraper.fr/systemesliste.php))
+     to narrow search results to that platform.
+   - **IGDB**: create a free Twitch developer application at
+     [dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps) to get a
+     Client ID + Secret.
+
+   The "Active provider" dropdown picks which one is tried first; if it isn't
+   configured, RetroLauncher automatically falls back to whichever provider
+   *is* set up.
 6. Back in the library, use a gamepad's D-pad + A/B, or your keyboard's arrow
    keys + Enter/Escape, to browse and launch games.
 
@@ -104,10 +119,10 @@ Then open **http://localhost:8080** in a browser on the same machine.
     physically there, or want an emulator with more accuracy/features than
     a browser core provides. It's not a remote game streaming service: if
     you're browsing from a different device, you won't see the window.
-- The IGDB provider needs credentials; without them, "Fetch Metadata" returns
-  a clear error rather than failing silently. Box art can also be dropped in
-  manually later by writing to a game's `cover_path` (a manual-upload UI is a
-  natural next addition).
+- Both metadata providers need credentials; without any configured, "Fetch
+  Metadata" returns a clear error rather than failing silently. Box art can
+  also be dropped in manually later by writing to a game's `cover_path` (a
+  manual-upload UI is a natural next addition).
 - ROM scanning is name-based (no checksum/DAT matching yet) — good enough for
   a personal library, but a `scanner.py` extension point is where DAT-based
   matching would go if you want LaunchBox-style verified imports later.

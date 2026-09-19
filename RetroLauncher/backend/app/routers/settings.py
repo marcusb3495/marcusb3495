@@ -7,7 +7,7 @@ from ..database import get_db
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
 # Keys that hold secrets and should be masked when read back to the UI.
-_SECRET_KEYS = {"igdb_client_secret"}
+_SECRET_KEYS = {"igdb_client_secret", "screenscraper_devpassword", "screenscraper_sspassword"}
 
 
 @router.get("", response_model=list[schemas.SettingOut])

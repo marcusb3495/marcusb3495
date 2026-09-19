@@ -103,7 +103,12 @@ class IGDBProvider(MetadataProvider):
             rating=row.get("rating"),
         )
 
-    def search(self, title: str, platform_name: Optional[str] = None) -> list[ScrapeCandidate]:
+    def search(
+        self,
+        title: str,
+        platform_name: Optional[str] = None,
+        system_id: Optional[str] = None,
+    ) -> list[ScrapeCandidate]:
         safe_title = title.replace('"', '\\"')
         query = f'search "{safe_title}"; fields {_SEARCH_FIELDS}; limit 15;'
         resp = requests.post(_API_URL, headers=self._headers(), data=query, timeout=15)

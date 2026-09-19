@@ -69,7 +69,9 @@
         </div>
         <div class="platform-icon-row">
           <input class="search-box" data-role="core-input" value="${escapeHtml(p.browser_core || "")}"
-                 placeholder="Browser core (e.g. nes)" style="max-width: 180px; padding: 6px 10px" />
+                 placeholder="Browser core (e.g. nes)" style="max-width: 160px; padding: 6px 10px" />
+          <input class="search-box" data-role="ss-system-input" value="${escapeHtml(p.screenscraper_system_id || "")}"
+                 placeholder="ScreenScraper system ID" style="max-width: 160px; padding: 6px 10px" />
           <button class="btn" data-nav data-action="save-core">Save</button>
         </div>
         <div>
@@ -87,23 +89,27 @@
       row.querySelector('[data-action="scan"]').addEventListener("click", () => scanPlatform(p.id));
       row.querySelector('[data-action="delete"]').addEventListener("click", () => deletePlatform(p.id));
       const coreInput = row.querySelector('[data-role="core-input"]');
+      const ssSystemInput = row.querySelector('[data-role="ss-system-input"]');
       row.querySelector('[data-action="save-core"]').addEventListener("click", () =>
-        savePlatformCore(p.id, coreInput.value.trim())
+        savePlatformScrapeFields(p.id, coreInput.value.trim(), ssSystemInput.value.trim())
       );
       container.appendChild(row);
     }
   }
 
-  async function savePlatformCore(platformId, browserCore) {
+  async function savePlatformScrapeFields(platformId, browserCore, screenscraperSystemId) {
     try {
       await api(`/api/platforms/${platformId}`, {
         method: "PUT",
-        body: JSON.stringify({ browser_core: browserCore || null }),
+        body: JSON.stringify({
+          browser_core: browserCore || null,
+          screenscraper_system_id: screenscraperSystemId || null,
+        }),
       });
-      toast("Browser core saved");
+      toast("Platform settings saved");
       await loadPlatforms();
     } catch (err) {
-      toast(`Failed to save browser core: ${err.message}`);
+      toast(`Failed to save platform settings: ${err.message}`);
     }
   }
 
@@ -163,6 +169,7 @@
           folder_path: el("p-folder").value.trim(),
           extensions: el("p-ext").value.trim(),
           browser_core: el("p-core").value.trim() || null,
+          screenscraper_system_id: el("p-ss-system").value.trim() || null,
         }),
       });
       el("platform-form").reset();
@@ -244,24 +251,39 @@
   async function loadSettings() {
     const settings = await api("/api/settings");
     const byKey = Object.fromEntries(settings.map((s) => [s.key, s.value]));
+
+    if (byKey.metadata_provider) el("s-provider").value = byKey.metadata_provider;
+
     if (byKey.igdb_client_id) el("s-client-id").value = byKey.igdb_client_id;
-    // igdb_client_secret is masked by the API; leave the field blank so the
-    // user isn't shown a fake value, but note that a saved secret exists.
+    // Secret fields are masked by the API; leave them blank so the user isn't
+    // shown a fake value, but note that a saved secret exists via placeholder.
     if (byKey.igdb_client_secret) el("s-client-secret").placeholder = "•••••••• (saved)";
+
+    if (byKey.screenscraper_devid) el("s-ss-devid").value = byKey.screenscraper_devid;
+    if (byKey.screenscraper_devpassword) el("s-ss-devpassword").placeholder = "•••••••• (saved)";
+    if (byKey.screenscraper_softname) el("s-ss-softname").value = byKey.screenscraper_softname;
+    if (byKey.screenscraper_ssid) el("s-ss-ssid").value = byKey.screenscraper_ssid;
+    if (byKey.screenscraper_sspassword) el("s-ss-sspassword").placeholder = "•••••••• (saved)";
+  }
+
+  async function saveSetting(key, value) {
+    if (value === "" || value == null) return;
+    await api("/api/settings", { method: "PUT", body: JSON.stringify({ key, value }) });
   }
 
   el("save-settings").addEventListener("click", async () => {
     try {
-      await api("/api/settings", {
-        method: "PUT",
-        body: JSON.stringify({ key: "igdb_client_id", value: el("s-client-id").value.trim() }),
-      });
-      if (el("s-client-secret").value.trim()) {
-        await api("/api/settings", {
-          method: "PUT",
-          body: JSON.stringify({ key: "igdb_client_secret", value: el("s-client-secret").value.trim() }),
-        });
-      }
+      await saveSetting("metadata_provider", el("s-provider").value);
+
+      await saveSetting("igdb_client_id", el("s-client-id").value.trim());
+      await saveSetting("igdb_client_secret", el("s-client-secret").value.trim());
+
+      await saveSetting("screenscraper_devid", el("s-ss-devid").value.trim());
+      await saveSetting("screenscraper_devpassword", el("s-ss-devpassword").value.trim());
+      await saveSetting("screenscraper_softname", el("s-ss-softname").value.trim());
+      await saveSetting("screenscraper_ssid", el("s-ss-ssid").value.trim());
+      await saveSetting("screenscraper_sspassword", el("s-ss-sspassword").value.trim());
+
       toast("Settings saved");
     } catch (err) {
       toast(`Failed to save settings: ${err.message}`);

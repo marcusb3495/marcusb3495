@@ -9,6 +9,7 @@ class PlatformBase(BaseModel):
     folder_path: str
     extensions: str = ""
     browser_core: Optional[str] = None
+    screenscraper_system_id: Optional[str] = None
 
 
 class PlatformCreate(PlatformBase):
@@ -20,6 +21,7 @@ class PlatformUpdate(BaseModel):
     folder_path: Optional[str] = None
     extensions: Optional[str] = None
     browser_core: Optional[str] = None
+    screenscraper_system_id: Optional[str] = None
 
 
 class PlatformOut(PlatformBase):

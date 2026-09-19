@@ -18,6 +18,7 @@ with engine.begin() as conn:
     for ddl in (
         "ALTER TABLE platforms ADD COLUMN icon_path VARCHAR",
         "ALTER TABLE platforms ADD COLUMN browser_core VARCHAR",
+        "ALTER TABLE platforms ADD COLUMN screenscraper_system_id VARCHAR",
     ):
         try:
             conn.execute(text(ddl))

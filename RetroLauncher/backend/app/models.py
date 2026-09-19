@@ -25,6 +25,7 @@ class Platform(Base):
     extensions = Column(String, nullable=False, default="")  # comma-separated, e.g. ".nes,.zip"
     icon_path = Column(String)  # filename under data/platform_icons, served at /media/platform_icons/...
     browser_core = Column(String)  # EmulatorJS core id (e.g. "nes", "snes", "gba") for in-browser play
+    screenscraper_system_id = Column(String)  # ScreenScraper "systemeid" for this platform, narrows scrape search
 
     emulators = relationship(
         "Emulator", back_populates="platform", cascade="all, delete-orphan"
