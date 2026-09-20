@@ -23,6 +23,7 @@
   // Surfaces uncaught JS errors (including ones thrown inside EmulatorJS
   // itself, loaded from its CDN) directly on the page, since most people
   // hitting this - especially on a phone - have no way to open DevTools.
+  // Returns the logError function so callers can log their own entries.
   function initErrorLog() {
     const box = document.createElement("div");
     box.id = "play-error-log";
@@ -49,6 +50,44 @@
       const reason = e.reason;
       logError(`Unhandled promise rejection: ${reason && reason.message ? reason.message : reason}`);
     });
+
+    return logError;
+  }
+
+  // EmulatorJS catches its own network failures internally and shows a
+  // generic "Network Error" status instead of throwing, so window.onerror
+  // never sees it. Patch fetch() and XMLHttpRequest (EmulatorJS uses both,
+  // e.g. XHR for the ROM download progress bar) to log every request's
+  // outcome, so the specific URL that actually failed shows up on screen.
+  function instrumentNetwork(logError) {
+    if (window.fetch) {
+      const origFetch = window.fetch.bind(window);
+      window.fetch = function (input, init) {
+        const url = typeof input === "string" ? input : input && input.url;
+        return origFetch(input, init).then(
+          (resp) => {
+            if (!resp.ok) logError(`fetch ${url} -> HTTP ${resp.status}`);
+            return resp;
+          },
+          (err) => {
+            logError(`fetch ${url} -> failed: ${err.message}`);
+            throw err;
+          }
+        );
+      };
+    }
+
+    const origOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+      this.__logUrl = url;
+      this.addEventListener("error", () => logError(`XHR ${this.__logUrl} -> network error`));
+      this.addEventListener("load", () => {
+        if (this.status === 0 || this.status >= 400) {
+          logError(`XHR ${this.__logUrl} -> HTTP ${this.status}`);
+        }
+      });
+      return origOpen.call(this, method, url, ...rest);
+    };
   }
 
   async function fetchJson(url) {
@@ -61,7 +100,8 @@
   }
 
   async function init() {
-    initErrorLog();
+    const logError = initErrorLog();
+    instrumentNetwork(logError);
 
     if (!gameId) {
       showMessage("No game specified.");
