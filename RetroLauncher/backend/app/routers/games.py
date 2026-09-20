@@ -67,5 +67,7 @@ def get_game_rom(game_id: int, filename: str, db: Session = Depends(get_db)):
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
     if not os.path.isfile(game.rom_path):
-        raise HTTPException(status_code=404, detail="ROM file not found on disk")
+        raise HTTPException(
+            status_code=404, detail=f"ROM file not found on disk at {game.rom_path!r}"
+        )
     return FileResponse(game.rom_path, filename=os.path.basename(game.rom_path))

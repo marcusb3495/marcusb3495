@@ -66,7 +66,13 @@
         const url = typeof input === "string" ? input : input && input.url;
         return origFetch(input, init).then(
           (resp) => {
-            if (!resp.ok) logError(`fetch ${url} -> HTTP ${resp.status}`);
+            if (!resp.ok) {
+              resp
+                .clone()
+                .text()
+                .then((body) => logError(`fetch ${url} -> HTTP ${resp.status}: ${body.slice(0, 200)}`))
+                .catch(() => logError(`fetch ${url} -> HTTP ${resp.status}`));
+            }
             return resp;
           },
           (err) => {
@@ -81,9 +87,15 @@
     XMLHttpRequest.prototype.open = function (method, url, ...rest) {
       this.__logUrl = url;
       this.addEventListener("error", () => logError(`XHR ${this.__logUrl} -> network error`));
-      this.addEventListener("load", () => {
+      this.addEventListener("load", function () {
         if (this.status === 0 || this.status >= 400) {
-          logError(`XHR ${this.__logUrl} -> HTTP ${this.status}`);
+          let body = "";
+          try {
+            body = (this.responseText || "").slice(0, 200);
+          } catch (_) {
+            /* responseType isn't text/blank - body unavailable, that's fine */
+          }
+          logError(`XHR ${this.__logUrl} -> HTTP ${this.status}${body ? `: ${body}` : ""}`);
         }
       });
       return origOpen.call(this, method, url, ...rest);
