@@ -91,11 +91,15 @@
         if (this.status === 0 || this.status >= 400) {
           let body = "";
           try {
-            body = (this.responseText || "").slice(0, 200);
+            if (this.response instanceof ArrayBuffer) {
+              body = new TextDecoder().decode(this.response);
+            } else {
+              body = this.responseText || "";
+            }
           } catch (_) {
-            /* responseType isn't text/blank - body unavailable, that's fine */
+            /* responseType isn't text/arraybuffer - body unavailable, that's fine */
           }
-          logError(`XHR ${this.__logUrl} -> HTTP ${this.status}${body ? `: ${body}` : ""}`);
+          logError(`XHR ${this.__logUrl} -> HTTP ${this.status}${body ? `: ${body.slice(0, 200)}` : ""}`);
         }
       });
       return origOpen.call(this, method, url, ...rest);
