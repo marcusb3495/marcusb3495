@@ -54,7 +54,11 @@ def update_platform(
     platform = db.get(models.Platform, platform_id)
     if not platform:
         raise HTTPException(status_code=404, detail="Platform not found")
-    for key, value in payload.model_dump(exclude_unset=True).items():
+    updates = payload.model_dump(exclude_unset=True)
+    if "name" in updates and updates["name"] != platform.name:
+        if db.query(models.Platform).filter(models.Platform.name == updates["name"]).first():
+            raise HTTPException(status_code=409, detail="Platform name already exists")
+    for key, value in updates.items():
         setattr(platform, key, value)
     db.commit()
     db.refresh(platform)

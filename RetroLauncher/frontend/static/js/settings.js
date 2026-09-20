@@ -63,16 +63,23 @@
               : '<div class="platform-icon-preview"></div>'
           }
           <div class="info">
-            <div>${escapeHtml(p.name)} <span class="sub">(${p.game_count} games)</span></div>
-            <div class="sub">${escapeHtml(p.folder_path)} · ${escapeHtml(p.extensions)}</div>
+            <input class="search-box" data-role="name-input" value="${escapeHtml(p.name)}"
+                   placeholder="Platform name" style="max-width: 220px; padding: 6px 10px; margin-bottom: 4px" />
+            <div class="sub">${p.game_count} games</div>
           </div>
+        </div>
+        <div class="platform-icon-row">
+          <input class="search-box" data-role="folder-input" value="${escapeHtml(p.folder_path)}"
+                 placeholder="ROM folder path" style="max-width: 280px; padding: 6px 10px" />
+          <input class="search-box" data-role="ext-input" value="${escapeHtml(p.extensions)}"
+                 placeholder="Extensions (.nes,.zip)" style="max-width: 160px; padding: 6px 10px" />
         </div>
         <div class="platform-icon-row">
           <input class="search-box" data-role="core-input" value="${escapeHtml(p.browser_core || "")}"
                  placeholder="Browser core (e.g. nes)" style="max-width: 160px; padding: 6px 10px" />
           <input class="search-box" data-role="ss-system-input" value="${escapeHtml(p.screenscraper_system_id || "")}"
                  placeholder="ScreenScraper system ID" style="max-width: 160px; padding: 6px 10px" />
-          <button class="btn" data-nav data-action="save-core">Save</button>
+          <button class="btn" data-nav data-action="save-platform">Save Platform</button>
         </div>
         <div class="platform-icon-row">
           <input class="search-box" data-role="gamelist-input"
@@ -94,10 +101,19 @@
       });
       row.querySelector('[data-action="scan"]').addEventListener("click", () => scanPlatform(p.id));
       row.querySelector('[data-action="delete"]').addEventListener("click", () => deletePlatform(p.id));
+      const nameInput = row.querySelector('[data-role="name-input"]');
+      const folderInput = row.querySelector('[data-role="folder-input"]');
+      const extInput = row.querySelector('[data-role="ext-input"]');
       const coreInput = row.querySelector('[data-role="core-input"]');
       const ssSystemInput = row.querySelector('[data-role="ss-system-input"]');
-      row.querySelector('[data-action="save-core"]').addEventListener("click", () =>
-        savePlatformScrapeFields(p.id, coreInput.value.trim(), ssSystemInput.value.trim())
+      row.querySelector('[data-action="save-platform"]').addEventListener("click", () =>
+        savePlatform(p.id, {
+          name: nameInput.value.trim(),
+          folder_path: folderInput.value.trim(),
+          extensions: extInput.value.trim(),
+          browser_core: coreInput.value.trim() || null,
+          screenscraper_system_id: ssSystemInput.value.trim() || null,
+        })
       );
       const gamelistInput = row.querySelector('[data-role="gamelist-input"]');
       row.querySelector('[data-action="import-gamelist"]').addEventListener("click", () =>
@@ -127,14 +143,15 @@
     }
   }
 
-  async function savePlatformScrapeFields(platformId, browserCore, screenscraperSystemId) {
+  async function savePlatform(platformId, fields) {
+    if (!fields.name || !fields.folder_path) {
+      toast("Name and ROM folder path can't be empty");
+      return;
+    }
     try {
       await api(`/api/platforms/${platformId}`, {
         method: "PUT",
-        body: JSON.stringify({
-          browser_core: browserCore || null,
-          screenscraper_system_id: screenscraperSystemId || null,
-        }),
+        body: JSON.stringify(fields),
       });
       toast("Platform settings saved");
       await loadPlatforms();
