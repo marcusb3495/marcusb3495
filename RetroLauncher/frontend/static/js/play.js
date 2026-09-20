@@ -20,6 +20,37 @@
     return d.innerHTML;
   }
 
+  // Surfaces uncaught JS errors (including ones thrown inside EmulatorJS
+  // itself, loaded from its CDN) directly on the page, since most people
+  // hitting this - especially on a phone - have no way to open DevTools.
+  function initErrorLog() {
+    const box = document.createElement("div");
+    box.id = "play-error-log";
+    box.hidden = true;
+    box.style.cssText =
+      "position:fixed;left:0;right:0;bottom:0;max-height:40vh;overflow:auto;" +
+      "background:#3a0d0d;color:#ffd7d7;font:12px/1.5 monospace;padding:10px 12px;" +
+      "border-top:2px solid #ff4d4d;white-space:pre-wrap;z-index:9999;";
+    document.body.appendChild(box);
+
+    function logError(text) {
+      box.hidden = false;
+      const line = document.createElement("div");
+      line.textContent = text;
+      box.appendChild(line);
+    }
+
+    window.addEventListener("error", (e) => {
+      logError(
+        `Error: ${e.message}` + (e.filename ? ` (${e.filename}:${e.lineno}:${e.colno})` : "")
+      );
+    });
+    window.addEventListener("unhandledrejection", (e) => {
+      const reason = e.reason;
+      logError(`Unhandled promise rejection: ${reason && reason.message ? reason.message : reason}`);
+    });
+  }
+
   async function fetchJson(url) {
     const resp = await fetch(url);
     if (!resp.ok) {
@@ -30,6 +61,8 @@
   }
 
   async function init() {
+    initErrorLog();
+
     if (!gameId) {
       showMessage("No game specified.");
       return;
