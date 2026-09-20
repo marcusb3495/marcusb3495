@@ -57,8 +57,13 @@
       return;
     }
 
+    // EmulatorJS reads the file extension out of this URL itself (not any
+    // response header) to decide how to handle the ROM, so the real
+    // filename - not just the game id - has to be part of the path.
+    const romFilename = game.rom_path.split(/[\\/]/).pop();
+
     window.EJS_player = "#game";
-    window.EJS_gameUrl = `/api/games/${gameId}/rom`;
+    window.EJS_gameUrl = `/api/games/${gameId}/rom/${encodeURIComponent(romFilename)}`;
     window.EJS_core = platform.browser_core;
     window.EJS_gameName = game.title;
     window.EJS_pathtodata = EMULATORJS_DATA_URL;

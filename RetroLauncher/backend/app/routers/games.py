@@ -56,8 +56,13 @@ def delete_game(game_id: int, db: Session = Depends(get_db)):
     db.commit()
 
 
-@router.get("/{game_id}/rom")
-def get_game_rom(game_id: int, db: Session = Depends(get_db)):
+@router.get("/{game_id}/rom/{filename}")
+def get_game_rom(game_id: int, filename: str, db: Session = Depends(get_db)):
+    # `filename` is not used to locate the file (game.rom_path already is
+    # the full path) - it exists so the URL itself carries the real file
+    # extension. EmulatorJS's loader inspects the extension in EJS_gameUrl
+    # to decide how to handle the ROM (e.g. zip extraction); a URL with no
+    # extension at all makes it fail to start.
     game = db.get(models.Game, game_id)
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
