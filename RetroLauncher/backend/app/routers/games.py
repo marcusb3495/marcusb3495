@@ -56,8 +56,11 @@ def delete_game(game_id: int, db: Session = Depends(get_db)):
     db.commit()
 
 
-@router.get("/{game_id}/rom/{filename}")
+@router.api_route("/{game_id}/rom/{filename}", methods=["GET", "HEAD"])
 def get_game_rom(game_id: int, filename: str, db: Session = Depends(get_db)):
+    # EmulatorJS sends a HEAD request first to read Content-Length for its
+    # download progress bar, then a GET (often ranged) for the actual
+    # bytes - a GET-only route 405s on that HEAD and the whole thing fails.
     # `filename` is not used to locate the file (game.rom_path already is
     # the full path) - it exists so the URL itself carries the real file
     # extension. EmulatorJS's loader inspects the extension in EJS_gameUrl
