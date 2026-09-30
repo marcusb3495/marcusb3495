@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RetroLauncher · Settings</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Retro<span>Launcher</span></h1>
+      <button class="nav-item" data-nav onclick="window.location.href='/'">← Back to Library</button>
+      <div class="sidebar-footer"></div>
+    </nav>
+
+    <div class="main">
+      <div class="topbar">
+        <h2>Settings</h2>
+      </div>
+      <div class="content">
+
+        <div class="panel">
+          <h3>Platforms</h3>
+          <div id="platform-rows"></div>
+          <form id="platform-form">
+            <div class="form-row">
+              <label for="p-name">Name</label>
+              <input id="p-name" required placeholder="e.g. Nintendo Entertainment System" />
+            </div>
+            <div class="form-row">
+              <label for="p-folder">ROM folder (absolute path on this machine)</label>
+              <input id="p-folder" required placeholder="/roms/nes" />
+            </div>
+            <div class="form-row">
+              <label for="p-ext">Extensions (comma separated)</label>
+              <input id="p-ext" required placeholder=".nes,.zip" />
+            </div>
+            <div class="form-row">
+              <label for="p-core">Browser Core (for Play in Browser, optional)</label>
+              <input id="p-core" placeholder="e.g. nes, snes, gba, genesis, psx, n64" />
+            </div>
+            <div class="form-row">
+              <label for="p-ss-system">ScreenScraper System ID (optional)</label>
+              <input id="p-ss-system" placeholder="e.g. 3 for NES - see help below" />
+            </div>
+            <button class="btn primary" type="submit" data-nav>+ Add Platform</button>
+          </form>
+          <p class="meta" style="margin-top: 10px">
+            "Browser Core" is the <a href="https://emulatorjs.org/docs/system" target="_blank" rel="noopener">EmulatorJS</a>
+            core id used for the in-browser "Play in Browser" button. Common values: <code>nes</code>, <code>snes</code>,
+            <code>gb</code>, <code>gbc</code>, <code>gba</code>, <code>n64</code>, <code>nds</code>, <code>genesis</code>,
+            <code>segaCD</code>, <code>sega32x</code>, <code>segaGG</code>, <code>segaMS</code>, <code>psx</code>,
+            <code>atari2600</code>, <code>atari7800</code>, <code>lynx</code>, <code>pce</code>, <code>arcade</code>.
+            Leave blank to only allow launching via a native emulator on the server.
+          </p>
+          <p class="meta">
+            "ScreenScraper System ID" narrows metadata/box-art search results to this platform when using the
+            ScreenScraper provider below. Find the numeric ID for your system at
+            <a href="https://www.screenscraper.fr/systemesliste.php" target="_blank" rel="noopener">screenscraper.fr/systemesliste.php</a>.
+            Leave blank to search across all systems (works fine, just slightly less precise).
+          </p>
+        </div>
+
+        <div class="panel">
+          <h3>Emulators</h3>
+          <div class="form-row">
+            <label for="e-platform">Platform</label>
+            <select id="e-platform" class="search-box" style="max-width: 320px"></select>
+          </div>
+          <div id="emulator-rows"></div>
+          <form id="emulator-form">
+            <div class="form-row">
+              <label for="e-name">Emulator name</label>
+              <input id="e-name" required placeholder="e.g. Mesen" />
+            </div>
+            <div class="form-row">
+              <label for="e-exec">Executable path</label>
+              <input id="e-exec" required placeholder="/usr/bin/mesen" />
+            </div>
+            <div class="form-row">
+              <label for="e-args">Launch arguments (use {rom} for the ROM path)</label>
+              <input id="e-args" value="{rom}" required />
+            </div>
+            <button class="btn primary" type="submit" data-nav>+ Add Emulator</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h3>Metadata &amp; Box Art</h3>
+          <div class="form-row">
+            <label for="s-provider">Active provider</label>
+            <select id="s-provider" class="search-box" style="max-width: 260px">
+              <option value="screenscraper">ScreenScraper</option>
+              <option value="igdb">IGDB</option>
+            </select>
+          </div>
+          <p class="meta">
+            Whichever provider is selected is used first; if it isn't configured below,
+            RetroLauncher automatically falls back to the other one if that's set up instead.
+          </p>
+
+          <h4 style="margin-bottom: 4px">ScreenScraper</h4>
+          <p class="meta">
+            ScreenScraper has much stronger retro/arcade coverage than IGDB, but requires a
+            developer account: request one from the ScreenScraper team via their
+            <a href="https://www.screenscraper.fr/forumdevs.php" target="_blank" rel="noopener">developer forum</a>
+            (this isn't an instant self-serve signup). A personal ScreenScraper account (optional,
+            below) is strongly recommended too - without one, anonymous API calls are throttled hard.
+          </p>
+          <div class="form-row">
+            <label for="s-ss-devid">Dev ID</label>
+            <input id="s-ss-devid" placeholder="Dev ID" />
+          </div>
+          <div class="form-row">
+            <label for="s-ss-devpassword">Dev Password</label>
+            <input id="s-ss-devpassword" type="password" placeholder="Dev Password" />
+          </div>
+          <div class="form-row">
+            <label for="s-ss-softname">Software name</label>
+            <input id="s-ss-softname" placeholder="RetroLauncher" />
+          </div>
+          <div class="form-row">
+            <label for="s-ss-ssid">Your ScreenScraper username (optional)</label>
+            <input id="s-ss-ssid" placeholder="Username" />
+          </div>
+          <div class="form-row">
+            <label for="s-ss-sspassword">Your ScreenScraper password (optional)</label>
+            <input id="s-ss-sspassword" type="password" placeholder="Password" />
+          </div>
+
+          <h4 style="margin-bottom: 4px">IGDB</h4>
+          <p class="meta">
+            Create a free Twitch developer app at
+            <a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noopener">dev.twitch.tv/console/apps</a>
+            to get a Client ID + Secret, then paste them below.
+          </p>
+          <div class="form-row">
+            <label for="s-client-id">IGDB Client ID</label>
+            <input id="s-client-id" placeholder="Client ID" />
+          </div>
+          <div class="form-row">
+            <label for="s-client-secret">IGDB Client Secret</label>
+            <input id="s-client-secret" type="password" placeholder="Client Secret" />
+          </div>
+
+          <button class="btn primary" id="save-settings" data-nav>Save Metadata Settings</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="/static/js/gamepad.js"></script>
+  <script src="/static/js/settings.js"></script>
+</body>
+</html>
