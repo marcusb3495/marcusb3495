@@ -30,12 +30,26 @@
     box.hidden = true;
     box.style.cssText =
       "position:fixed;left:0;right:0;bottom:0;max-height:40vh;overflow:auto;" +
-      "background:#3a0d0d;color:#ffd7d7;font:12px/1.5 monospace;padding:10px 12px;" +
+      "background:#3a0d0d;color:#ffd7d7;font:12px/1.5 monospace;padding:10px 32px 10px 12px;" +
       "border-top:2px solid #ff4d4d;white-space:pre-wrap;z-index:9999;";
     document.body.appendChild(box);
 
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "×";
+    closeBtn.title = "Dismiss";
+    closeBtn.style.cssText =
+      "position:fixed;right:8px;bottom:8px;z-index:10000;background:#ff4d4d;color:#3a0d0d;" +
+      "border:none;border-radius:4px;width:24px;height:24px;font:16px/1 monospace;cursor:pointer;";
+    closeBtn.hidden = true;
+    closeBtn.addEventListener("click", () => {
+      box.hidden = true;
+      closeBtn.hidden = true;
+    });
+    document.body.appendChild(closeBtn);
+
     function logError(text) {
       box.hidden = false;
+      closeBtn.hidden = false;
       const line = document.createElement("div");
       line.textContent = text;
       box.appendChild(line);
@@ -59,6 +73,13 @@
   // never sees it. Patch fetch() and XMLHttpRequest (EmulatorJS uses both,
   // e.g. XHR for the ROM download progress bar) to log every request's
   // outcome, so the specific URL that actually failed shows up on screen.
+  // EmulatorJS probes for a localization file matching the browser's exact
+  // locale (e.g. en-GB.json) and silently falls back to its default text
+  // when that 404s - real behavior, not something worth alarming over.
+  function isIgnorableRequest(url) {
+    return typeof url === "string" && url.includes("/localization/");
+  }
+
   function instrumentNetwork(logError) {
     if (window.fetch) {
       const origFetch = window.fetch.bind(window);
@@ -66,7 +87,7 @@
         const url = typeof input === "string" ? input : input && input.url;
         return origFetch(input, init).then(
           (resp) => {
-            if (!resp.ok) {
+            if (!resp.ok && !isIgnorableRequest(url)) {
               resp
                 .clone()
                 .text()
@@ -86,9 +107,11 @@
     const origOpen = XMLHttpRequest.prototype.open;
     XMLHttpRequest.prototype.open = function (method, url, ...rest) {
       this.__logUrl = url;
-      this.addEventListener("error", () => logError(`XHR ${this.__logUrl} -> network error`));
+      this.addEventListener("error", () => {
+        if (!isIgnorableRequest(this.__logUrl)) logError(`XHR ${this.__logUrl} -> network error`);
+      });
       this.addEventListener("load", function () {
-        if (this.status === 0 || this.status >= 400) {
+        if ((this.status === 0 || this.status >= 400) && !isIgnorableRequest(this.__logUrl)) {
           let body = "";
           try {
             if (this.response instanceof ArrayBuffer) {
