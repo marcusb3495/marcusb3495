@@ -1,7 +1,9 @@
 import os
+import re
+import time
 
 from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
@@ -44,20 +46,34 @@ _FRONTEND_DIR = os.path.normpath(
 )
 app.mount("/static", StaticFiles(directory=os.path.join(_FRONTEND_DIR, "static")), name="static")
 
+# Bumped once per server start, so every restart (i.e. every deploy) forces
+# browsers to re-fetch static JS/CSS instead of serving a stale cached copy -
+# otherwise a code update can silently keep running old client-side JS.
+_STATIC_VERSION = str(int(time.time()))
+
+
+def _serve_page(filename: str) -> HTMLResponse:
+    with open(os.path.join(_FRONTEND_DIR, filename), encoding="utf-8") as f:
+        html = f.read()
+    html = re.sub(
+        r'(src|href)="(/static/[^"]+)"', rf'\1="\2?v={_STATIC_VERSION}"', html
+    )
+    return HTMLResponse(html)
+
 
 @app.get("/")
 def index():
-    return FileResponse(os.path.join(_FRONTEND_DIR, "index.html"))
+    return _serve_page("index.html")
 
 
 @app.get("/settings.html")
 def settings_page():
-    return FileResponse(os.path.join(_FRONTEND_DIR, "settings.html"))
+    return _serve_page("settings.html")
 
 
 @app.get("/play.html")
 def play_page():
-    return FileResponse(os.path.join(_FRONTEND_DIR, "play.html"))
+    return _serve_page("play.html")
 
 
 @app.get("/api/health")
