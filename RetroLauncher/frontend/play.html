@@ -26,6 +26,19 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .tap-hint {
+      position: fixed;
+      top: 49px;
+      left: 0;
+      right: 0;
+      z-index: 9998;
+      background: #1a2a3a;
+      color: #cfe4ff;
+      font: 13px/1.5 system-ui, sans-serif;
+      text-align: center;
+      padding: 8px 16px;
+      border-bottom: 1px solid #2d4a66;
+    }
     #game {
       width: 100%;
       height: calc(100vh - 49px);
@@ -44,6 +57,10 @@
   <div class="play-topbar">
     <button class="btn" onclick="window.location.href='/'">← Back to Library</button>
     <h2 id="play-title">Loading...</h2>
+  </div>
+  <div id="tap-hint" class="tap-hint">
+    If the screen looks grey or shows "paused", tap/click it once to start - some browsers
+    (especially iPhone/iPad Safari) require that before audio/video can play.
   </div>
   <div id="game"></div>
   <div id="play-message" class="play-message" hidden></div>

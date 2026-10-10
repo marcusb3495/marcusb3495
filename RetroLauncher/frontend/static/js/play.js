@@ -9,6 +9,7 @@
 
   function showMessage(html) {
     document.getElementById("game").hidden = true;
+    document.getElementById("tap-hint").hidden = true;
     const box = document.getElementById("play-message");
     box.innerHTML = html;
     box.hidden = false;
@@ -141,6 +142,12 @@
   async function init() {
     const logError = initErrorLog();
     instrumentNetwork(logError);
+
+    const hint = document.getElementById("tap-hint");
+    document.addEventListener("pointerdown", () => (hint.hidden = true), {
+      once: true,
+      capture: true,
+    });
 
     if (!gameId) {
       showMessage("No game specified.");
