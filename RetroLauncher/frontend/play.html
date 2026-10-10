@@ -36,8 +36,19 @@
       color: #cfe4ff;
       font: 13px/1.5 system-ui, sans-serif;
       text-align: center;
-      padding: 8px 16px;
+      padding: 8px 40px 8px 16px;
       border-bottom: 1px solid #2d4a66;
+    }
+    .tap-hint button {
+      position: absolute;
+      top: 4px;
+      right: 8px;
+      background: none;
+      border: none;
+      color: #cfe4ff;
+      font: 18px/1 system-ui, sans-serif;
+      cursor: pointer;
+      padding: 4px 8px;
     }
     #game {
       width: 100%;
@@ -61,6 +72,7 @@
   <div id="tap-hint" class="tap-hint">
     If the screen looks grey or shows "paused", tap/click it once to start - some browsers
     (especially iPhone/iPad Safari) require that before audio/video can play.
+    <button id="tap-hint-close" title="Dismiss">&times;</button>
   </div>
   <div id="game"></div>
   <div id="play-message" class="play-message" hidden></div>

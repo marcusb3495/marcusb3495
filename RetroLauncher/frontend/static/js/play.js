@@ -144,10 +144,13 @@
     instrumentNetwork(logError);
 
     const hint = document.getElementById("tap-hint");
-    document.addEventListener("pointerdown", () => (hint.hidden = true), {
-      once: true,
-      capture: true,
-    });
+    const dismissHint = () => (hint.hidden = true);
+    // Clicks inside EmulatorJS's own canvas/iframe don't bubble up to this
+    // page's document, so the hint can't rely solely on that - give it its
+    // own close button and an auto-hide timer as backups.
+    document.addEventListener("pointerdown", dismissHint, { once: true, capture: true });
+    document.getElementById("tap-hint-close").addEventListener("click", dismissHint);
+    setTimeout(dismissHint, 10000);
 
     if (!gameId) {
       showMessage("No game specified.");
