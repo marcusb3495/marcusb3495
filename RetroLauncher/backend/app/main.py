@@ -1,6 +1,5 @@
 import os
 import re
-import time
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
@@ -46,18 +45,25 @@ _FRONTEND_DIR = os.path.normpath(
 )
 app.mount("/static", StaticFiles(directory=os.path.join(_FRONTEND_DIR, "static")), name="static")
 
-# Bumped once per server start, so every restart (i.e. every deploy) forces
-# browsers to re-fetch static JS/CSS instead of serving a stale cached copy -
-# otherwise a code update can silently keep running old client-side JS.
-_STATIC_VERSION = str(int(time.time()))
+# Each static file's own last-modified time is used as its cache-busting
+# version, computed fresh on every page request - so `git pull` alone
+# invalidates a browser's cache for exactly the files that changed, even
+# if the server process itself isn't restarted (unlike a single version
+# fixed at server start, which only busts the cache on restart).
+def _versioned_url(match) -> str:
+    attr, path = match.group(1), match.group(2)
+    full = os.path.join(_FRONTEND_DIR, path.lstrip("/"))
+    try:
+        version = int(os.path.getmtime(full))
+    except OSError:
+        version = 0
+    return f'{attr}="{path}?v={version}"'
 
 
 def _serve_page(filename: str) -> HTMLResponse:
     with open(os.path.join(_FRONTEND_DIR, filename), encoding="utf-8") as f:
         html = f.read()
-    html = re.sub(
-        r'(src|href)="(/static/[^"]+)"', rf'\1="\2?v={_STATIC_VERSION}"', html
-    )
+    html = re.sub(r'(src|href)="(/static/[^"]+)"', _versioned_url, html)
     return HTMLResponse(html)
 
 
